@@ -34,14 +34,15 @@ param publicIpSku string = 'Basic'
 @description('The OS version')
 @allowed([
   '2022-datacenter-smalldisk-g2'
+  '2019-datacenter-gensecond'
 ])
-param OSVersion string = '2022-datacenter-smalldisk-g2'
+param OSVersion string = '2019-datacenter-gensecond'
 
 @description('Size of the VM')
 param vmSize string = 'Standard_B2s'
 
 @description('The name of the VM used for automation')
-param automationVMName string = 'vm-orca-prod-weu-001'
+param automationVMName string = 'vm-orca-weu-001'
 
 
 // RESOURCES - Azure Automation Account
@@ -88,8 +89,8 @@ module automationVMDeployment 'modules/vm.bicep' = {
   name: 'vmDeployment'
   params: {
     location: location
-    adminPassword: automationVMAdmin
-    adminUsername: automationVMAdminPassword
+    automationVMAdmin: automationVMAdmin
+    automationVMAdminPassword: automationVMAdminPassword
     OSVersion: OSVersion
     publicIPAllocationMethod: publicIPAllocationMethod 
     publicIpName: publicIpName

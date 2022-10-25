@@ -1,7 +1,7 @@
-param adminUsername string
-@minLength(12)
+param automationVMAdmin string
+@minLength(8)
 @secure()
-param adminPassword string
+param automationVMAdminPassword string
 param dnsLabelPrefix string
 param publicIpName string
 @allowed([
@@ -16,11 +16,13 @@ param publicIPAllocationMethod string
 param publicIpSku string
 @allowed([
 '2022-datacenter-smalldisk-g2'
+'2019-datacenter-gensecond'
 ])
 param OSVersion string
 param vmSize string
 param location string
 param automationVMName string
+
 var storageAccountName = 'bootdiags${uniqueString(resourceGroup().id)}'
 var nicName = 'myORCAVMNic'
 var addressPrefix = '10.0.0.0/16'
@@ -118,17 +120,20 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   }
 }
 
-resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
+resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
   name: automationVMName
   location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     osProfile: {
       computerName: automationVMName
-      adminUsername: adminUsername
-      adminPassword: adminPassword
+      adminUsername: automationVMAdmin
+      adminPassword: automationVMAdminPassword
     }
     storageProfile: {
       imageReference: {
@@ -170,3 +175,4 @@ resource vm 'Microsoft.Compute/virtualMachines@2021-03-01' = {
 // OUTPUTS
 
 output vmFQDN string = vm.name
+output systemManagedIdentity string = vm.identity.principalId
