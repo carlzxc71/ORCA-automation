@@ -14,6 +14,10 @@ We have also experienced issues where maybe a merger or an aquisition has happen
 
 This does not automatically add them to your custom anti-spam/anti-phishing, safe-link, safe-attachment & anti-malware policies. It also does not automatically configure DKIM for their domain. We have had many instances where this has happened and if you get an automated report every month you can remediate this. 
 
+## Why does the solution not use Azure Automation or Azure Functions instead of a VM
+
+Bla bla
+
 ## Pre-requisites
 
 - Privileged user administrator in Azure Active Directory

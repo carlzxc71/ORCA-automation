@@ -73,6 +73,19 @@ resource automationVM 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         sku: '2019-datacenter-gensecond'
         version: 'latest'
       }
+      osDisk: {
+        createOption: 'FromImage'
+        caching: 'ReadWrite'
+        osType: 'Windows'
+        managedDisk: {
+         storageAccountType: 'StandardSSD_LRS' 
+        }
+        deleteOption: 'Delete'
+        diskSizeGB: 127
+      }
+      dataDisks: [
+        
+      ]
     }
     osProfile: {
       adminUsername: automationVMAdmin
