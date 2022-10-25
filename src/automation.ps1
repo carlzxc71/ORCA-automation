@@ -8,7 +8,7 @@ Param(
     [Parameter(Mandatory = $false)]
     [String] $subject = "Automated ORCA report",
     [Parameter(Mandatory = $false)]
-    [String] $content = "Test content",
+    [String] $content = "Hello, attached is your ORCA-report.",
     [Parameter(Mandatory = $false)]
     [String] $ResourceGroupName,
     [Parameter(Mandatory = $true)]
