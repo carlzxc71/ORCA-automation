@@ -44,6 +44,9 @@ param vmSize string = 'Standard_B2s'
 @description('The name of the VM used for automation')
 param automationVMName string = 'vm-orca-weu-001'
 
+@description('Enter keyvault name')
+param keyVaultName string = 'kv-orca-prod-weu-001'
+
 
 // RESOURCES - Azure Automation Account
 
@@ -83,6 +86,30 @@ resource automationRunbookStopVM 'Microsoft.Automation/automationAccounts/runboo
   }
 }
 
+resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
+  name: keyVaultName
+  location: location
+  properties: {
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    accessPolicies: [
+      {
+        objectId: automationVMDeployment.outputs.systemManagedIdentity
+        permissions: {
+          secrets: [
+            'get'
+            'set'
+          ]
+        }
+        tenantId: subscription().tenantId
+      }
+    ]
+    tenantId: subscription().tenantId
+  }
+}
+
 // MODULES
 
 module automationVMDeployment 'modules/vm.bicep' = {
@@ -100,3 +127,7 @@ module automationVMDeployment 'modules/vm.bicep' = {
     vmSize: vmSize
   }
 }
+
+// OUTPUTS
+
+output keyVaultName string = keyVault.name
