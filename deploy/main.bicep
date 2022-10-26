@@ -94,6 +94,18 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
       family: 'A'
       name: 'standard'
     }
+    accessPolicies: [
+      {
+        objectId: automationVMDeployment.outputs.systemManagedIdentity
+        permissions: {
+          secrets: [
+            'get'
+            'set'
+          ]
+        }
+        tenantId: subscription().tenantId
+      }
+    ]
     tenantId: subscription().tenantId
   }
 }
