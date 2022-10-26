@@ -18,26 +18,26 @@
 # Check to install any missing dependenciesgi
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-if (!(Get-Module -Name Nuget)) {
+if (!(Get-Module -ListAvailable -Name Nuget)) {
       
     Install-PackageProvider -Name NuGet -Confirm:$false -Force
     Install-Module NuGet -Confirm:$false -Force
 }
 
   
-if (!(Get-Module -Name ExchangeOnlineManagement)) {
+if (!(Get-Module -ListAvailable -Name ExchangeOnlineManagement)) {
       
     Install-Module ExchangeOnlineManagement -Confirm:$false -Force
 }
   
-if (!(Get-Module -Name ORCA)) {
+if (!(Get-Module -ListAvailable -Name ORCA)) {
       
     Install-Module ORCA -Confirm:$false -Force
 }
   
-if (!(Get-Module -Name Az)) {
+if (!(Get-Module -ListAvailable -Name Az.Accounts)) {
       
-    Install-Module Az -Confirm:$false -Force
+    Install-Module Az.Accounts -Confirm:$false -Force
 }
   
 # Connect to Exchange Online and extract the ORCA report
