@@ -1,6 +1,6 @@
-## Parameters
+ ## Parameters
 
-Param(
+ Param(
     [Parameter(Mandatory = $false)]
     [String] $destEmailAddress = "carl.lindberg@iver.se",
     [Parameter(Mandatory = $false)]
@@ -15,30 +15,33 @@ Param(
     [String] $azureKeyVault = "kv-sendgrid-test-weu-001"
 )
   
-# Import Exchange & ORCA modules and connect using managed identity
+# Check to install any missing dependenciesgi
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+if (!(Get-Module -Name Nuget)) {
+      
+    Install-PackageProvider -Name NuGet -Confirm:$false -Force
+    Install-Module NuGet -Confirm:$false -Force
+}
+
   
 if (!(Get-Module -Name ExchangeOnlineManagement)) {
       
-    Install-Module ExchangeOnlineManagement -Force
+    Install-Module ExchangeOnlineManagement -Confirm:$false -Force
 }
   
 if (!(Get-Module -Name ORCA)) {
       
-    Install-Module ORCA -Force
+    Install-Module ORCA -Confirm:$false -Force
 }
   
 if (!(Get-Module -Name Az)) {
       
-    Install-Module Az -Force
+    Install-Module Az -Confirm:$false -Force
 }
   
-Import-Module -Name ExchangeOnlineManagement
-Import-Module -Name ORCA
-Import-Module -Name Az
+# Connect to Exchange Online and extract the ORCA report
 Connect-ExchangeOnline -ManagedIdentity -Organization "hultafors.onmicrosoft.com"
-  
-# Get the ORCA report
-  
 $attachment = Invoke-ORCA -Output HTML -OutputOptions @{HTML = @{DisplayReport = $False } } 
   
 # Ensures you do not inherit an AzContext in your runbook
@@ -102,3 +105,4 @@ $body = @{
 $bodyJson = $body | ConvertTo-Json -Depth 4
   
 $response = Invoke-RestMethod -Uri https://api.sendgrid.com/v3/mail/send -Method Post -Headers $headers -Body $bodyJson
+ 
