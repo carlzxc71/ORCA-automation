@@ -15,31 +15,6 @@
     [String] $azureKeyVault = "kv-sendgrid-test-weu-001"
 )
   
-# Check to install any missing dependencies
-
-# [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-# if (!(Get-Module -ListAvailable -Name Nuget)) {
-      
-#     Install-PackageProvider -Name NuGet -Confirm:$false -Force
-#     Install-Module NuGet -Confirm:$false -Force
-# }
-
-  
-# if (!(Get-Module -ListAvailable -Name ExchangeOnlineManagement)) {
-      
-#     Install-Module ExchangeOnlineManagement -Confirm:$false -Force
-# }
-  
-# if (!(Get-Module -ListAvailable -Name ORCA)) {
-      
-#     Install-Module ORCA -Confirm:$false -Force
-# }
-  
-# if (!(Get-Module -ListAvailable -Name Az.Accounts)) {
-      
-#     Install-Module Az.Accounts -Confirm:$false -Force
-# }
-  
 # Connect to Exchange Online and extract the ORCA report
 Connect-ExchangeOnline -ManagedIdentity -Organization "hultafors.onmicrosoft.com"
 $attachment = Invoke-ORCA -Output HTML -OutputOptions @{HTML = @{DisplayReport = $False } } 
