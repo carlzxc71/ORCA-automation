@@ -42,13 +42,52 @@ All the resources that are deployed are tagged so they can be identified as part
 ## Pre-requisites
 
 - Privileged user administrator or Global Administrator in Azure Active Directory
-- Contributor permissions over at least one Resource Group
+- Owner permissions over at least one Resource Group where resources are deployed
 - Azure CLI and Azure Powershell module installed
 - Microsoft Graph module installed
 
 ## Guide for implementation
 
-## References
+#### 1. Clone this Git repository
 
-The original ORCA-module repo: https://github.com/cammurray/orca
+- All the templates and powershell scripts required to run this solution is saved in this repo for you to use
+- Clone to directory of your choice and cd into the git-directory
+
+Note that all the commands you will be instructed to execute will assume you are standing in the git-directory when executing them. 
+
+#### 2. Authenticate and create your resource group that will host the Azure Resources
+
+- Login to Azure using AZ CLI, ensure you are using an account with the correct permissions to create resources
+
+```AZ CLI
+az login
+```
+- Ensure you have the correct subscription set as default
+
+```AC CLI
+az account list -o table
+az account set -s "<Subscription Name>"
+```
+
+- Creata a new resource group (if you are using an existing one skip this command)
+```AZ CLI
+az group create --name <name of RG> --location <location>
+```
+
+#### 3. Run the template to automatically provision all the dependant Azure Resources
+
+- The git repository contains a bicep template that will provision some resources required for the solution to work
+    - Azure Automation account with two runbooks & managed identity
+    - A keyvault to store the secret API key used in the email integration
+    - A role assignment for the Key Vault, granted VM contributor to power the virtual machine on and off using its managed identity
+    - A virtual machine (used to simulate the Automation sandbox environment)
+
+- In your shell run the following command to deploy the resources
+```AZ CLI
+az deployment group create -g <name of RG> --template-file deploy/main.bicep
+````
+
+- Enter the password for the virtual machine admin account, IMPORTANT: document this somewhere safe
+
+
 
