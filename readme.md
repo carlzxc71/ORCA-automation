@@ -1,6 +1,7 @@
-# Implementing automated ORCA report
+# Introduction
 
-This project allows you to implement the required services and activate a system that will run your EOP configuration and match it with Microsofts best practice once a month. 
+This project allows you to implement the required services and activate a system that will run your EOP configuration and match it with Microsofts best practice once a month. <br>
+The Microsoft Defender for Office 365 Recommended Configuration Analyzer (ORCA)
 
 ## Why would you want this?
 
@@ -47,4 +48,7 @@ All the resources that are deployed are tagged so they can be identified as part
 
 ## Guide for implementation
 
-1. 
+## References
+
+The original ORCA-module repo: https://github.com/cammurray/orca
+
