@@ -146,3 +146,4 @@ module automationVMDeployment 'modules/vm.bicep' = {
 // OUTPUTS
 
 output keyVaultName string = keyVault.name
+output automationAccountNameOutput string = azureAutomationAccount.name

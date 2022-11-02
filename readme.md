@@ -89,7 +89,7 @@ az group create --name <name of RG> --location <location>
 - In your shell run the following command to deploy the resources
 ```AZ CLI
 az deployment group create -g <name of RG> --template-file deploy/main.bicep
-````
+```
 
 - Enter the password for the virtual machine admin account, IMPORTANT: document this somewhere safe
 - Wait for the deployment to finish, if you wish you can visit the resource group in the portal and click on deployment to follow all items being deployed
@@ -123,10 +123,163 @@ Source-reference from MS Docs: [Send an Email with Automation](https://learn.mic
         - Fill in the required information, make sure From Email Address and Reply to is set to the mailbox you have created for this
     - Login to your mailbox and verify the email that Twilio sends you
         - You may need to use **Resend verification email** if nothing shows up, I have had instances where it was fast and sometimes I had to wait for some time
-    - After you have verified your sender you will have completed the setup required in Sendgrids portal¨
+    - After you have verified your sender you will have completed the setup required in Sendgrids portal
 
 Note: We use **Single Sender Verification** when performing the first-time setup, which is recommended for proof of concepts/test-setups. <br>
 After you have verified the entire setup for this solution you can look into **Domain Verification**
+
+#### 5. Create the keyvault secret and assign the VM managed identity Exchange Online Permissions
+
+In this step you will store the API-key created in the previous step in the Keyvault you have deployed.
+
+- Go to the keyvault and to access policies
+    - Give your own account Secret Management template permissions
+        - Access Policies -> Create
+        - Chose Secret Management from template
+        - Chose your own account
+        - Create
+
+- Run the Register-KeyVaultSecret.ps1 script
+```Powershell
+$SendGridAPIKey = "<Paste your API code here>"
+$VaultName = "<Enter keyvault name here>"
+
+$userAssignedManagedIdentity = "<Enter Object ID of Virtual Machine Managed Identity here>"
+
+Connect-AzAccount #Login to Azure through Powershell
+
+# Convert the SendGrid API key into a SecureString
+$Secret = ConvertTo-SecureString -String $SendGridAPIKey `
+    -AsPlainText -Force
+
+# Create the Keyvault Secret
+Set-AzKeyVaultSecret -VaultName $VaultName `
+    -Name 'SendGridAPIKey' `
+    -SecretValue $Secret
+```
+
+The managed identity needs certain permissions in order to authenticate and query Exchange Online, we will use MS Graph for this
+
+```Powershell
+Connect-MgGraph -Scopes "User.Read.all","Application.Read.All","AppRoleAssignment.ReadWrite.All"
+$params = @{
+    ServicePrincipalId = '<>' # managed identity object id
+    PrincipalId = '<>' # managed identity object id
+    ResourceId = (Get-MgServicePrincipal -Filter "AppId eq '00000002-0000-0ff1-ce00-000000000000'").id # Exchange online
+    AppRoleId = "dc50a0fb-09a3-484d-be87-e023b12c6440" # Exchange.ManageAsApp
+}
+
+New-MgServicePrincipalAppRoleAssignedTo @params
+```
+
+We also need to assign the Exchange Administrator role to the Managed Identity as only the application permissions are not supported.
+
+- Head to Azure AD Privileged Identity Management
+    - Under **Manage** Chose **Azure AD Roles**
+    - **Assign Eligibility** and **Add Assignment**
+    - Under **Select Role** chose **Exchange Administrator**
+    - Under **Select Members** enter the name of the VM, select and click next
+    - Provide justification and chose **Assign**
+
+It may take 10-15 minutes for all the permissions to propagate.
+
+#### 6. Login to the provisioned VM with RDP
+
+In the future the aim is to deliver a solution that will not require this step, but for now we do. 
+
+- Login to the VM through RDP
+    - Username: orcaadmin
+    - Password: The PW you set when deploying
+
+- On the desktop create a file called: Trigger-ORCA.xml (You may need to show file extensions to ensure its .xml and not .txt)
+- Paste in the following code: 
+
+```XML
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>2022-10-25T08:03:23.4153238</Date>
+    <Author>vm-sendgrid-tes\clin</Author>
+    <Description>Triggers and sends the automated ORCA report</Description>
+    <URI>\Trigger-ORCAReport</URI>
+  </RegistrationInfo>
+  <Triggers>
+    <BootTrigger>
+      <Enabled>true</Enabled>
+    </BootTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-21-2123838175-1840825630-523378789-500</UserId>
+      <LogonType>Password</LogonType>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>true</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>false</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <DisallowStartOnRemoteAppSession>false</DisallowStartOnRemoteAppSession>
+    <UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT72H</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-ExecutionPolicy Bypass -File "C:\Automation\ORCA\Trigger-ORCAReport.ps1"</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+````
+
+- Open task scheduler and use **Import task...** 
+    - Navigate to where you saved your XML and chose it
+- Click **Change user or group** 
+    - Enter **orcaadmin**
+- Click OK and enter the password for the account orcaadmin
+- Enter the following command in Powershell
+```Powershell
+ New-Item -Path "C:\Automation\ORCA\Trigger-ORCAReport.ps1" -Force 
+````
+- Open the **Trigger-ORCAReport.ps1** through powershell and enter the code in automation.ps1
+    - Update the parameters to suit your needs
+    - Put in the name of the keyvault you created earlier in the KV variable
+    - Update line 19 with the default domain name of your tenant
+
+- Go to the Azure Portal and open your Virtual Machine
+    - In the left pane under **Operations** chose **Run Command**
+    - Chose **RunPowershellScript**
+    - Paste the following code in and run
+
+```Powershell
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+Install-PackageProvider -Name NuGet -Confirm:$false -Force
+Install-Module NuGet -Confirm:$false -Force
+
+Install-Module ExchangeOnlineManagement -Confirm:$false -Force
+Install-Module ORCA -Confirm:$false -Force
+Install-Module Az.Accounts -Confirm:$false -Force
+```
+
+- Wait for the script to complete, this will install all required modules for Trigger-ORCAReport.ps1 to run successfully
+
+- After the modules are installed you should be ready to try a test-run of Trigger-ORCAReport.ps1
+    - Make sure you change $destEmailAddress to your own and try and run the script
+
 
 
 
