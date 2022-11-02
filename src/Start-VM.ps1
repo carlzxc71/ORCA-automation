@@ -1,9 +1,7 @@
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory=$false)]
-    [string] $vmName = "vm-sendgrid-test-weu-001",
-    [Parameter(Mandatory=$false)]
-    [string] $resourceGroupName = "WEU1RG007"
+    [string] $vmName = "<enter VM name here>",
+    [string] $resourceGroupName = "<Enter the RG you are working with here>"
 )
 
 $ProgressPreference="silentlyContinue"
