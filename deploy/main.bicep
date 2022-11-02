@@ -45,7 +45,7 @@ param vmSize string = 'Standard_B2s'
 param automationVMName string = 'vm-orca-weu-001'
 
 @description('Enter keyvault name')
-param keyVaultName string = 'kv-orca-prod-weu-001'
+param keyVaultName string = 'kv-bb-orca-prod-weu-001'
 
 
 // RESOURCES - Azure Automation Account
@@ -146,3 +146,4 @@ module automationVMDeployment 'modules/vm.bicep' = {
 // OUTPUTS
 
 output keyVaultName string = keyVault.name
+output automationAccountNameOutput string = azureAutomationAccount.name
