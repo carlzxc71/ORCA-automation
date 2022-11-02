@@ -272,7 +272,7 @@ Install-Module NuGet -Confirm:$false -Force
 
 Install-Module ExchangeOnlineManagement -Confirm:$false -Force
 Install-Module ORCA -Confirm:$false -Force
-Install-Module Az.Accounts -Confirm:$false -Force
+Install-Module Az -Confirm:$false -Force
 ```
 
 - Wait for the script to complete, this will install all required modules for Trigger-ORCAReport.ps1 to run successfully
