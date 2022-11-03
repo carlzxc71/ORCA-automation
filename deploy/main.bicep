@@ -64,6 +64,9 @@ resource azureAutomationAccount 'Microsoft.Automation/automationAccounts@2021-06
       name: 'Basic'
     }  
   }
+  tags: {
+    orcaAutomatedResource: 'true'
+  }
 }
 
 resource automationRunbookStartVM 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' = {
@@ -73,6 +76,9 @@ resource automationRunbookStartVM 'Microsoft.Automation/automationAccounts/runbo
   properties: {
     runbookType: 'PowerShell7'
   }
+  tags: {
+    orcaAutomatedResource: 'true'
+  }
 }
 
 resource automationRunbookStopVM 'Microsoft.Automation/automationAccounts/runbooks@2019-06-01' = {
@@ -81,6 +87,9 @@ resource automationRunbookStopVM 'Microsoft.Automation/automationAccounts/runboo
   location: location
   properties: {
     runbookType: 'PowerShell7'
+  }
+  tags: {
+    orcaAutomatedResource: 'true'
   }
 }
 
@@ -105,6 +114,9 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
       }
     ]
     tenantId: subscription().tenantId
+  }
+  tags: {
+    orcaAutomatedResource: 'true'
   }
 }
 
