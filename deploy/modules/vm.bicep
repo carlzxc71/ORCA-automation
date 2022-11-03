@@ -33,7 +33,7 @@ resource stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   sku: {
     name: 'Standard_LRS'
   }
-  kind: 'Storage'
+  kind: 'StorageV2'
 }
 
 resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {

@@ -4,7 +4,7 @@
 param location string = resourceGroup().location
 
 @description('Enter the name of Automation Account')
-param azureAutomationAccountName string = 'aa-sendgrid-test-weu-001'
+param azureAutomationAccountName string
 
 @description('Enter Admin name of Automation VM')
 param automationVMAdmin string = 'orcaadmin'
@@ -25,6 +25,8 @@ param publicIpName string = 'myPublicIP'
 
 @description('The allocation method for the VM')
 param publicIPAllocationMethod string = 'Dynamic'
+
+@description('Enter public IP SKU')
 @allowed([
   'Basic'
   'Standard'
@@ -38,10 +40,10 @@ param OSVersion string = '2019-datacenter-gensecond'
 param vmSize string = 'Standard_B2s'
 
 @description('The name of the VM used for automation')
-param automationVMName string = 'vm-orca-weu-001'
+param automationVMName string
 
 @description('Enter keyvault name')
-param keyVaultName string = 'kv-bb-orca-prod-weu-001'
+param keyVaultName string
 
 
 // RESOURCES - Azure Automation Account

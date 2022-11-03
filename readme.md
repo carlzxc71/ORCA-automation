@@ -1,5 +1,7 @@
 # Introduction
 
+Welcome to my first ever open-source project!
+
 This project allows you to implement the required services and activate a system that will run your EOP configuration and match it with Microsofts best practice once a month. <br>
 The Microsoft Defender for Office 365 Recommended Configuration Analyzer (ORCA)
 
@@ -9,7 +11,7 @@ The Microsoft Defender for Office 365 Recommended Configuration Analyzer (ORCA)
 
 - Security best practices change all the time and this way you can get an update monthly (or more frequently) and ensure you are inline with the recommendations. 
 
-- Merger or aquisitions has happened and you onboard the domain of the new company in to your Microsoft 365 tenant as an accepted domin, but you forget to add them to policies and configure DKIM, this way you are alerted of this
+- Merger or aquisitions has happened and you onboard the domain of the new company in to your Microsoft 365 tenant as an accepted domin, but you forget to add them to policies and configure DKIM, this way you are alerted of this.
 
 ## Why does the solution not use Azure Automation or Azure Functions instead of a VM
 
@@ -19,20 +21,21 @@ When trying to call this command with the switch locally you would just receive 
 
 The ORCA module has network-dependencies and uses the Resolve-DNSName commandlet. This is not allowed to run inside Azure Automation sandboxes, so we could not run the automation.ps1 script inside a Runbook. 
 
-There is one AA used and that is to power on and off the virtual machine which in this case will simulate the Runbook sandbox VM. 
+There is one automation account used and that is to power on and off the virtual machine which in this case will simulate the Runbook sandbox VM. <br>
+The VM will be powered off at all times except for a few hours every month to keep costs down.
 
 ## What does this solution do
 
 1. Triggers an Automation runbook on the 1st of each month to start an Azure VM
 2. The Azure VM has a scheduled task that runs on system startup that triggers a script
-3. The script authenticates to Exchange Online using the VM has a Managed Identity & extracts the ORCA-report
+3. The script authenticates to Exchange Online using the VM which has a Managed Identity & extracts the ORCA-report
 4. The report is emailed to your preferred destination
 5. Another runbook triggers to shutdown the virtual machine and deallocate it so you are not billed for VM uptime
 
-There is a SaaS subscription setup with Twilio Sendgrid Email API, configured through your Azure Portal.
-The API is used to send email using a secret API-key stored in Azure Keyvault.
+We use Twilio Sendgrid Email API services because this is a service Microsoft has partnership with and you can configure a free subscription to their services directly in the Azure Portal. <br>
+This is what will allow us to send email in automated powershell-scripts.
 
-All the resources that are deployed are tagged so they can be identified as part of the solution: 
+Resources being configured:
 
 - Virtual machine with Managed Identity
 - Azure Automation account
@@ -41,7 +44,7 @@ All the resources that are deployed are tagged so they can be identified as part
 
 ## Pre-requisites
 
-- Privileged user administrator or Global Administrator in Azure Active Directory
+- Privileged user administrator or Global Administrator in Azure Active Directory to assign Azure AD roles
 - Owner permissions over at least one Resource Group where resources are deployed
 - Azure CLI, Azure Powershell & MS Graph module installed
 - Have access to a shared mailbox that will be used for Email Registration to twilio, ex: automation@domain.com 
@@ -51,7 +54,7 @@ All the resources that are deployed are tagged so they can be identified as part
 
 ## Guide for implementation
 
-#### 1. Clone this Git repository
+#### 1. Fork and clone this Git repository
 
 - All the templates and powershell scripts required to run this solution is saved in this repo for you to use
 - Clone to directory of your choice and cd into the git-directory
@@ -77,9 +80,14 @@ az account set -s "<Subscription Name>"
 az group create --name <name of RG> --location <location>
 ```
 
+- It is always a good idea to check for upgrades for Bicep before deploying templates
+```AC CLI
+az bicep upgrade
+```
+
 #### 3. Run the template to automatically provision all the dependant Azure Resources
 
-- The git repository contains a bicep template that will provision some resources required for the solution to work
+- The git repository contains a folder with bicep templates that will provision some resources required for the solution to work
     - Azure Automation account with two runbooks & managed identity
     - A keyvault to store the secret API key used in the email integration
     - A role assignment for the Key Vault, granted VM contributor to power the virtual machine on and off using its managed identity
@@ -88,13 +96,13 @@ az group create --name <name of RG> --location <location>
 - Important: Go through all the parameters in deploy/params.json file and update them to suit your setup
   - Double check network variables in vm.bicep and update any inputs here to suit your environment
 
-- In your shell run the following command to deploy the resources
+- In your shell run the following command to deploy the resources after updating params.json
 ```AZ CLI
 az deployment group create -g <name of RG> --template-file deploy/main.bicep --parameters deploy/params.json
 ```
 
 - Enter the password for the virtual machine admin account, IMPORTANT: document this somewhere safe
-- Wait for the deployment to finish, if you wish you can visit the resource group in the portal and click on deployment to follow all items being deployed
+- Wait for the deployment to finish, if you wish you can visit the resource group in the portal and click on deployments to follow all items being deployed or just wait for the terminal to finish
 
 #### 4. Register a SaaS-subscription for Twilio Sendgrid Email Platform
 
@@ -132,21 +140,20 @@ After you have verified the entire setup for this solution you can look into **D
 
 #### 5. Create the keyvault secret and assign the VM managed identity Exchange Online Permissions
 
-In this step you will store the API-key created in the previous step in the Keyvault you have deployed.
+In this step you will store the API-key created in the previous step in the Keyvault you have deployed.<br>
+The script will use the keyvault to retreive the API-key for sending email and the VM requires Exchange Administrator to run the powershell commandlets `Connect-ExchangeOnline` & `Invoke-ORCAReport`
 
 - Go to the keyvault and to access policies
-    - Give your own account Secret Management template permissions
+    - Give your own account Secret & Certificate Management template permissions 
         - Access Policies -> Create
         - Chose Secret Management from template
         - Chose your own account
         - Create
 
-- Run the Register-KeyVaultSecret.ps1 script
+- Run the Register-KeyVaultSecret.ps1 script in Powershell on your local machine
 ```Powershell
 $SendGridAPIKey = "<Paste your API code here>"
 $VaultName = "<Enter keyvault name here>"
-
-$userAssignedManagedIdentity = "<Enter Object ID of Virtual Machine Managed Identity here>"
 
 Connect-AzAccount #Login to Azure through Powershell
 
@@ -165,8 +172,8 @@ The managed identity needs certain permissions in order to authenticate and quer
 ```Powershell
 Connect-MgGraph -Scopes "User.Read.all","Application.Read.All","AppRoleAssignment.ReadWrite.All"
 $params = @{
-    ServicePrincipalId = '<>' # managed identity object id
-    PrincipalId = '<>' # managed identity object id
+    ServicePrincipalId = '<Enter managed object ID of Virtual Machine>' # managed identity object id - you can find this under your resource group in the Azure Portal -> deployments -> vmDeployment -> outputs
+    PrincipalId = '<Enter managed object ID of Virtual Machine>' # managed identity object id - you can find this under your resource group in the Azure Portal -> deployments -> vmDeployment -> outputs
     ResourceId = (Get-MgServicePrincipal -Filter "AppId eq '00000002-0000-0ff1-ce00-000000000000'").id # Exchange online
     AppRoleId = "dc50a0fb-09a3-484d-be87-e023b12c6440" # Exchange.ManageAsApp
 }
@@ -185,6 +192,8 @@ We also need to assign the Exchange Administrator role to the Managed Identity a
 
 It may take 10-15 minutes for all the permissions to propagate.
 
+*Note: In theory it should be enough with either the MS-graph permissions or the Exchange Admin role but at the time of developing this solution I have had issues where I did not complete both, this requirement may change later.*
+
 #### 6. Login to the provisioned VM with RDP
 
 In the future the aim is to deliver a solution that will not require this step, but for now we do. 
@@ -201,7 +210,7 @@ In the future the aim is to deliver a solution that will not require this step, 
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo>
     <Date>2022-10-25T08:03:23.4153238</Date>
-    <Author>vm-sendgrid-tes\clin</Author>
+    <Author>machine\admin</Author>
     <Description>Triggers and sends the automated ORCA report</Description>
     <URI>\Trigger-ORCAReport</URI>
   </RegistrationInfo>
@@ -261,10 +270,7 @@ In the future the aim is to deliver a solution that will not require this step, 
     - Put in the name of the keyvault you created earlier in the KV variable
     - Update line 19 with the default domain name of your tenant
 
-- Go to the Azure Portal and open your Virtual Machine
-    - In the left pane under **Operations** chose **Run Command**
-    - Chose **RunPowershellScript**
-    - Paste the following code in and run
+- Open Powershell as an Administrator on the Virtual Machine and run the following code:
 
 ```Powershell
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -280,15 +286,9 @@ Install-Module Az -Confirm:$false -Force
 - Wait for the script to complete, this will install all required modules for Trigger-ORCAReport.ps1 to run successfully
 
 - After the modules are installed you should be ready to try a test-run of Trigger-ORCAReport.ps1
-    - Make sure you change $destEmailAddress to your own and try and run the script
+    - Make sure you change the parameters in the param-block of the script to suit your testing needs
 
-Note: Sometimes the Az Powershell Module has not been installed correctly in the previous step.<br>
-In those cases simply install it manually in Powershell on the VM
-```Powershell
-Install-Module Az -Confirm:$false -Force
-```
-
-- If successful continue, else troubleshoot or report any errors
+- If successful it should authenticate to Exchange Online, trigger the ORCA-report & send the document to you in an email.
 
 #### 7. Configure the deployed Automation Account to schedule VM start and stop
 
@@ -377,6 +377,14 @@ Stop-AzVM -ResourceGroupName $resourceGroupName -Name $vmName -Confirm:$false -F
 - If successful and you receive the report go ahead and turn off the VM any way you see fit
   - It is supposed to be stopped (deallocated) as we only want it live on the 1st of the month when we want to trigger the report
 
+## References & resources
+
+- [MS Docs: Send an email from an Automation Runbook](https://learn.microsoft.com/en-us/azure/automation/automation-send-email)
+- [Web Dev Zone: How to send an email with an attachment using Powershell and SendGrid API](https://dzone.com/articles/how-to-send-an-email-with-attachement-powershell-sendgrid-api)
+- [onprem.wtf: How to connect to Exchange Online powershell with a Managed Identity](https://onprem.wtf/post/how-to-connect-exchange-online-managed-identity/)
+- [MS Docs: Azure Automation Sandbox limitations](https://learn.microsoft.com/en-us/azure/automation/shared-resources/modules#sandboxes)
+- [MS Docs: Exchange Online Management module](https://learn.microsoft.com/en-us/powershell/exchange/exchange-online-powershell-v2?view=exchange-ps)
+- [GitHub: ORCA GitHub Repo](https://github.com/cammurray/orca)
 
 
 
