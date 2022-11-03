@@ -85,12 +85,12 @@ az group create --name <name of RG> --location <location>
     - A role assignment for the Key Vault, granted VM contributor to power the virtual machine on and off using its managed identity
     - A virtual machine (used to simulate the Automation sandbox environment)
 
-- Important: Check all the parameters being set in main.bicep and update the values to suit your deployment
-    - I had an issue where I tried to deploy but the key-vault name was being used, simply update the parameter and run the deploy command again
+- Important: Go through all the parameters in deploy/params.json file and update them to suit your setup
+  - Double check network variables in vm.bicep and update any inputs here to suit your environment
 
 - In your shell run the following command to deploy the resources
 ```AZ CLI
-az deployment group create -g <name of RG> --template-file deploy/main.bicep
+az deployment group create -g <name of RG> --template-file deploy/main.bicep --parameters deploy/params.json
 ```
 
 - Enter the password for the virtual machine admin account, IMPORTANT: document this somewhere safe
