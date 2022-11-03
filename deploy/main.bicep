@@ -32,10 +32,6 @@ param publicIPAllocationMethod string = 'Dynamic'
 param publicIpSku string = 'Basic'
 
 @description('The OS version')
-@allowed([
-  '2022-datacenter-smalldisk-g2'
-  '2019-datacenter-gensecond'
-])
 param OSVersion string = '2019-datacenter-gensecond'
 
 @description('Size of the VM')

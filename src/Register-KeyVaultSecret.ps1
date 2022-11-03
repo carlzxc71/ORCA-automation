@@ -1,8 +1,6 @@
 $SendGridAPIKey = "<Paste your API code here>"
 $VaultName = "<Enter keyvault name here>"
 
-$userAssignedManagedIdentity = "<Enter Object ID of Virtual Machine Managed Identity here>"
-
 Connect-AzAccount #Login to Azure through Powershell
 
 # Convert the SendGrid API key into a SecureString
