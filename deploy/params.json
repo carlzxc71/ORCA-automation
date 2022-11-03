@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "azureAutomationAccountName": {
-            "value": "<enter the name of your automation account"
+            "value": "<enter the name of your automation account>"
         },
         "automationVMName": {
             "value": "<enter name of VM>"
