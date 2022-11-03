@@ -1,22 +1,21 @@
  ## Parameters
 
  Param(
-    [Parameter(Mandatory = $false)]
-    [String] $destEmailAddress = "carl.lindberg@iver.se",
-    [Parameter(Mandatory = $false)]
-    [String] $fromEmailAddress = "automation@hultaforsgroup.com",
-    [Parameter(Mandatory = $false)]
+    [String] $destEmailAddress = "<enter destination email>",
+    [String] $fromEmailAddress = "<enter from email address, automation@domain.com>",
     [String] $subject = "Automated ORCA report",
-    [Parameter(Mandatory = $false)]
     [String] $content = "Hello, attached is your ORCA-report.",
-    [Parameter(Mandatory = $false)]
-    [String] $ResourceGroupName,
-    [Parameter(Mandatory = $false)]
-    [String] $azureKeyVault = "kv-sendgrid-test-weu-001"
+    [String] $azureKeyVault = "<enter name of your keyvault>",
+    [String] $onmicrosoftDomain = "<changeme.onmicrosoft.com>" 
+
 )
   
 # Connect to Exchange Online and extract the ORCA report
-Connect-ExchangeOnline -ManagedIdentity -Organization "hultafors.onmicrosoft.com"
+Connect-ExchangeOnline -ManagedIdentity -Organization $onmicrosoftDomain
+
+# If -ManagedIdentity wont work and you need to configure auth using an app registration and certificate instead: https://learn.microsoft.com/en-us/powershell/exchange/app-only-auth-powershell-v2?view=exchange-ps
+# Connect-ExchangeOnline -CertificateThumbPrint "<certificate thumbprint>" -AppID "<application ID>" -Organization $onmicrosoftDomain  
+
 $attachment = Invoke-ORCA -Output HTML -OutputOptions @{HTML = @{DisplayReport = $False } } 
   
 # Ensures you do not inherit an AzContext in your runbook
@@ -26,7 +25,7 @@ Disable-AzContextAutosave -Scope Process
 $AzureContext = (Connect-AzAccount -Identity).context
   
 # set and store context
-$AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext 
+$AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext  -ErrorAction SilentlyContinue 
   
 $VaultName = $azureKeyVault
   

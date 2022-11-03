@@ -5,9 +5,6 @@
         "azureAutomationAccountName": {
             "value": "<enter the name of your automation account"
         },
-        "automationVMAdmin": {
-            "value": "<enter the name of the admin account for the vm, document this along with PW you set later>"
-        },
         "automationVMName": {
             "value": "<enter name of VM>"
         },
