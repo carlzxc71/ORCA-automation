@@ -14,10 +14,6 @@ param publicIPAllocationMethod string
   'Standard'
 ])
 param publicIpSku string
-@allowed([
-'2022-datacenter-smalldisk-g2'
-'2019-datacenter-gensecond'
-])
 param OSVersion string
 param vmSize string
 param location string

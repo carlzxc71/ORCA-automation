@@ -43,9 +43,11 @@ All the resources that are deployed are tagged so they can be identified as part
 
 - Privileged user administrator or Global Administrator in Azure Active Directory
 - Owner permissions over at least one Resource Group where resources are deployed
-- Azure CLI and Azure Powershell module installed
-- Microsoft Graph module installed
+- Azure CLI, Azure Powershell & MS Graph module installed
 - Have access to a shared mailbox that will be used for Email Registration to twilio, ex: automation@domain.com 
+- You deploying the solution should have some prior experience with:
+  - Azure, the portal and managing resource groups and resources
+  - Powershell and CLI
 
 ## Guide for implementation
 
@@ -83,12 +85,12 @@ az group create --name <name of RG> --location <location>
     - A role assignment for the Key Vault, granted VM contributor to power the virtual machine on and off using its managed identity
     - A virtual machine (used to simulate the Automation sandbox environment)
 
-- Important: Check all the parameters being set in main.bicep and update the values to suit your deployment
-    - I had an issue where I tried to deploy but the key-vault name was being used, simply update the parameter and run the deploy command again
+- Important: Go through all the parameters in deploy/params.json file and update them to suit your setup
+  - Double check network variables in vm.bicep and update any inputs here to suit your environment
 
 - In your shell run the following command to deploy the resources
 ```AZ CLI
-az deployment group create -g <name of RG> --template-file deploy/main.bicep
+az deployment group create -g <name of RG> --template-file deploy/main.bicep --parameters deploy/params.json
 ```
 
 - Enter the password for the virtual machine admin account, IMPORTANT: document this somewhere safe
@@ -254,7 +256,7 @@ In the future the aim is to deliver a solution that will not require this step, 
 ```Powershell
  New-Item -Path "C:\Automation\ORCA\Trigger-ORCAReport.ps1" -Force 
 ````
-- Open the **Trigger-ORCAReport.ps1** through powershell and enter the code in automation.ps1
+- Open the **Trigger-ORCAReport.ps1** through powershell and paste in the code from automation.ps1 that you received from cloning this repo
     - Update the parameters to suit your needs
     - Put in the name of the keyvault you created earlier in the KV variable
     - Update line 19 with the default domain name of your tenant
@@ -272,13 +274,109 @@ Install-Module NuGet -Confirm:$false -Force
 
 Install-Module ExchangeOnlineManagement -Confirm:$false -Force
 Install-Module ORCA -Confirm:$false -Force
-Install-Module Az.Accounts -Confirm:$false -Force
+Install-Module Az -Confirm:$false -Force
 ```
 
 - Wait for the script to complete, this will install all required modules for Trigger-ORCAReport.ps1 to run successfully
 
 - After the modules are installed you should be ready to try a test-run of Trigger-ORCAReport.ps1
     - Make sure you change $destEmailAddress to your own and try and run the script
+
+Note: Sometimes the Az Powershell Module has not been installed correctly in the previous step.<br>
+In those cases simply install it manually in Powershell on the VM
+```Powershell
+Install-Module Az -Confirm:$false -Force
+```
+
+- If successful continue, else troubleshoot or report any errors
+
+#### 7. Configure the deployed Automation Account to schedule VM start and stop
+
+When you deployed all the Azure resources in step three you configured an Automation Account, this is what we will use to schedule the VM stop and start.
+
+- In the Azure Portal to to **Automation Accounts**
+- Chose the account you deployed in step 3 and click **Runbooks**
+- You will see two runbooks with Authoring status: New
+- Choose **Start-VM**
+  - Choose **Edit**
+  - Paste the following code found in Start-VM.ps1
+```Powershell
+[CmdletBinding()]
+param (
+    [string] $vmName = "<enter VM name here>",
+    [string] $resourceGroupName = "<Enter the RG you are working with here>"
+)
+
+$ProgressPreference="silentlyContinue"
+
+Disable-AzContextAutosave -Scope Process
+  
+# Connect to Azure with system-assigned managed identity
+$AzureContext = (Connect-AzAccount -Identity).context
+  
+# set and store context
+$AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext 
+
+# Stop the VM
+Start-AzVM -ResourceGroupName $resourceGroupName -Name $vmName -Confirm:$false
+```
+- Choose **Save** then **Publish**
+- Choose **Link to schedule**
+  - Choose **Link a scheduled to your runbook**
+  - Choose **Add a schedule**
+  - Give it a name: **Start ORCA**
+  - Starts: Chose the first of following month (We are assuming you will run this on the 1st of every month, you can adjust to fit you)
+  - 8:00 AM for time
+  - Set your Timezone
+  - Chose **Recurring** -> **Recur every** 1 month
+  - Chose **Month days** -> 1
+  - Leave everything else as default and choose **Create**
+- Choose **Parameters and run settings**
+  - Change nothing and just choose **OK**
+- Choose **OK**
+
+- Go back to automation accounts and choose **Stop-VM**
+  - Repeat the same steps and paste the following code
+```Powershell
+[CmdletBinding()]
+param (
+    [string] $vmName = "<Enter your VM name here>",
+    [string] $resourceGroupName = "<Enter your RG here>"
+)
+
+$ProgressPreference="silentlyContinue"
+
+Disable-AzContextAutosave -Scope Process
+  
+# Connect to Azure with system-assigned managed identity
+$AzureContext = (Connect-AzAccount -Identity).context
+  
+# set and store context
+$AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext 
+
+# Stop the VM
+Stop-AzVM -ResourceGroupName $resourceGroupName -Name $vmName -Confirm:$false -Force
+```
+  - Repeat the steps you did for linking to a schedule, just chose a time that is later then whatever time you set for Start-VM
+  - In my use case the Trigger-ORCAReport.ps1 runs for a few hours because of the amount of custom domains in the customer tenant
+  - This means my time to trigger Stop-VM will take place a few hours later
+
+  Once you have published and linked both runbooks to a schedule you can test the runbooks to make sure it works to stop and start the virtual machine.<br>
+  If you have followed along so far this means your VM is currently running.
+
+  - Go ahead and test Stop-VM runbook
+  - When you have clicked in on **Stop-VM** runbook you can click **Start** 
+    - Leave params empty and just click **OK**
+    - Check if your VM stops after status of runbook-run is **Completed** (Sometimes it takes some time for the portal to report that the VM is off)
+    - The status in the portal should be: **Stopped (Deallocated)** and will not continue to be billed for runtime
+
+- If you don't run into any issues you can go ahead and test **Start-VM** runbook
+  - Repeat the same process, after some time the VM should have status Running and the scheduled task we configured earlier should be running
+  - After sometime if the script finishes successfully you will receive an email-report with the ORCA-report
+
+- If successful and you receive the report go ahead and turn off the VM any way you see fit
+  - It is supposed to be stopped (deallocated) as we only want it live on the 1st of the month when we want to trigger the report
+
 
 
 

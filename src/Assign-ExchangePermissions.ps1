@@ -8,3 +8,5 @@ $params = @{
 
 New-MgServicePrincipalAppRoleAssignedTo @params
 
+$roleId = (Get-MgRoleManagementDirectoryRoleDefinition -Filter "DisplayName eq 'Exchange Administrator'").id
+New-MgRoleManagementDirectoryRoleAssignment -PrincipalId 73895db6-9bf0-4f67-9a68-0a9ba65aa1fe -RoleDefinitionId 29232cdf-9323-42fd-ade2-1d097af3e4de -DirectoryScopeId "/"
