@@ -3,16 +3,16 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "azureAutomationAccountName": {
-            "value": "aa-sendgrid-test-weu-002"
+            "value": "<enter the name of your automation account"
         },
         "automationVMAdmin": {
-            "value": "orcaadmin02"
+            "value": "<enter the name of the admin account for the vm, document this along with PW you set later>"
         },
         "automationVMName": {
-            "value": "vm-orca-weu-002"
+            "value": "<enter name of VM>"
         },
         "keyVaultName": {
-            "value": "kvclinorcaweu001"
+            "value": "<enter name of keyvault>"
         }
     }
 }
