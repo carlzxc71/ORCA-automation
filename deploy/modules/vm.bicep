@@ -48,6 +48,9 @@ resource pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
       domainNameLabel: dnsLabelPrefix
     }
   }
+  tags: {
+    orcaAutomatedResource: 'true'
+  }
 }
 
 resource securityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
@@ -69,6 +72,9 @@ resource securityGroup 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
         }
       }
     ]
+  }
+  tags: {
+    orcaAutomatedResource: 'true'
   }
 }
 
@@ -93,6 +99,9 @@ resource vn 'Microsoft.Network/virtualNetworks@2021-02-01' = {
       }
     ]
   }
+  tags: {
+    orcaAutomatedResource: 'true'
+  }
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
@@ -113,6 +122,9 @@ resource nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
         }
       }
     ]
+  }
+  tags: {
+    orcaAutomatedResource: 'true'
   }
 }
 
@@ -165,6 +177,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
         storageUri: stg.properties.primaryEndpoints.blob
       }
     }
+  }
+  tags: {
+    orcaAutomatedResource: 'true'
   }
 }
 

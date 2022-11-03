@@ -42,6 +42,9 @@ Resources being configured:
 - Keyvault
 - Twilio SaaS subscription (Free plan)
 
+- All resources gets a tagged applied so you can track what resources are dependencies to this solution 
+  - orcaAutomatedResources: true
+
 ## Pre-requisites
 
 - Privileged user administrator or Global Administrator in Azure Active Directory to assign Azure AD roles
