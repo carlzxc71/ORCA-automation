@@ -256,7 +256,7 @@ In the future the aim is to deliver a solution that will not require this step, 
 ```Powershell
  New-Item -Path "C:\Automation\ORCA\Trigger-ORCAReport.ps1" -Force 
 ````
-- Open the **Trigger-ORCAReport.ps1** through powershell and enter the code in automation.ps1
+- Open the **Trigger-ORCAReport.ps1** through powershell and paste in the code from automation.ps1 that you received from cloning this repo
     - Update the parameters to suit your needs
     - Put in the name of the keyvault you created earlier in the KV variable
     - Update line 19 with the default domain name of your tenant
@@ -376,6 +376,8 @@ Stop-AzVM -ResourceGroupName $resourceGroupName -Name $vmName -Confirm:$false -F
 
 - If successful and you receive the report go ahead and turn off the VM any way you see fit
   - It is supposed to be stopped (deallocated) as we only want it live on the 1st of the month when we want to trigger the report
+
+
 
 
 
