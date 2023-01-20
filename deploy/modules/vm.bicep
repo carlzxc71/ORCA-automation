@@ -21,9 +21,9 @@ param automationVMName string
 
 var storageAccountName = 'bootdiags${uniqueString(resourceGroup().id)}'
 var nicName = 'myORCAVMNic'
-var addressPrefix = '10.0.0.0/16'
+var addressPrefix = '10.0.0.0/24'
 var subnetName = 'Subnet'
-var subnetPrefix = '10.0.0.0/24'
+var subnetPrefix = '10.0.0.0/26'
 var virtualNetworkName = 'ORCA-VM'
 var networkSecurityGroupName = 'default-NSG'
 
